@@ -4,6 +4,8 @@ import asyncio
 import random
 import os
 from discord.ext import commands
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 # On Start
 intents = discord.Intents.default()
@@ -141,4 +143,17 @@ async def on_message(message):
         await send_temp_reply(f"Gave 'member' role to {count} users.")
 
 
+class KeepAliveHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Bot is running.")
+
+def run_web_server():
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(("", port), KeepAliveHandler)
+    print(f"Web server running on port {port}")
+    server.serve_forever()
+
+threading.Thread(target=run_web_server).start()
 client.run(os.environ["DISCORD_TOKEN"])
